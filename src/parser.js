@@ -17,6 +17,7 @@
 function Parser (filename, grammar) {
     this.filename = filename;
     this.grammar = grammar;
+    this.comments = {};
     this.p_flags = 0;
     return this;
 }
@@ -68,6 +69,9 @@ function findInDfa (a, obj) {
     return false;
 }
 
+Parser.prototype.addcomment = function(value, start, end, line) {
+    this.comments[start] = value;
+}
 
 // Add a token; return true if we're done
 Parser.prototype.addtoken = function (type, value, context) {
@@ -304,6 +308,9 @@ function makeParser (filename, style) {
                 lineno += 1;
                 column = 0;
             }
+            if (type === T_COMMENT) {
+                p.addcomment(value, start, end, line);
+            }
             //print("  not calling addtoken");
             return undefined;
         }
@@ -330,6 +337,7 @@ function makeParser (filename, style) {
 
     // set flags, and return
     parseFunc.p_flags = p.p_flags;
+    parseFunc.comments = p.comments;
     return parseFunc;
 }
 
@@ -350,7 +358,7 @@ Sk.parse = function parse (filename, input) {
     /*
      * Small adjustments here in order to return th flags and the cst
      */
-    return {"cst": ret, "flags": parseFunc.p_flags};
+    return {"cst": ret, "flags": parseFunc.p_flags, "comments": parseFunc.comments};
 };
 
 Sk.parseTreeDump = function parseTreeDump (n, indent) {
